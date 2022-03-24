@@ -13,7 +13,15 @@ const byte sensePin = A0;
 // GLOBALS
 // Last sensed values
 int x, y, count;
-POINT *calibPts = new POINT[3];
+POINT* calibPts = (POINT*)malloc(sizeof(POINT) * 3);
+// set desired screen coordinates corresponding to the 3 calibration points
+// TODO: set these points later
+POINT screenPts[] =     {
+    [0] = { x = 0, y = 0 },
+    [1] = { x = 50, y = 0  },
+    [2] = { x = -50, y = 0  }
+    };
+MATRIX *matrixPtr;
 
 int setCalibrationMatrix(POINT * displayPtr, POINT * screenPtr, MATRIX * matrixPtr) {
 
@@ -157,21 +165,40 @@ void setup() {
   Serial.print("Begin calibration.");
   char buffer[50];
   for (int i = 0; i < 3; i++) {
-    setStandbyMode();
+//    setStandbyMode();
     sprintf(buffer, "Please press and hold the calibration point #",i + 1);
-    Serial.print (buffer);
-    boolean touchDetected = false;
-    while (!touchDetected) {
-      touchDetected = analogRead(sensePin);
+    Serial.print(buffer);
+    while (Serial.available() == 0) {
+      // wait for user input
     }
-    populatePointArr(calibPts, i);
+    char ans = Serial.read();
+    delay(1000);
+    Serial.print(ans);
+    delay(1000);
+    if (ans == 'y') {
+      populatePointArr(calibPts, i);
+      Serial.println("");
+      Serial.print(calibPts[i].x);
+      Serial.println(calibPts[i].y);
+    } else {
+      Serial.print("Are you pressing on the screen? y/n");
+    }  
   }
+  setCalibrationMatrix(calibPts, screenPts, matrixPtr);
+  Serial.print("matrix: ");
+  Serial.print(matrixPtr->An + ", ");
+  Serial.print(matrixPtr->Bn + ", ");
+  Serial.print(matrixPtr->Cn + ", ");
+  Serial.print(matrixPtr->Dn + ", ");
+  Serial.print(matrixPtr->En + ", ");
+  Serial.print(matrixPtr->Fn + ", ");
+  Serial.print(matrixPtr->Divider);
 }
 
 void setStandbyMode() {
-  digitalWrite(cornerPins[0], HIGH);
+  digitalWrite(cornerPins[0], LOW);
   digitalWrite(cornerPins[1], HIGH);
-  digitalWrite(cornerPins[2], LOW);
+  digitalWrite(cornerPins[2], HIGH);
   digitalWrite(cornerPins[3], HIGH);
   delay(1);
 }
