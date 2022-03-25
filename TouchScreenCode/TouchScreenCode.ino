@@ -18,10 +18,11 @@ POINT* calibPts = (POINT*)malloc(sizeof(POINT) * 3);
 // TODO: set these points later
 POINT screenPts[] =     {
     [0] = { x = 0, y = 0 },
-    [1] = { x = 50, y = 0  },
-    [2] = { x = -50, y = 0  }
+    [1] = { x = 100, y = 50  },
+    [2] = { x = -50, y = 75  }
     };
-MATRIX *matrixPtr;
+MATRIX *matrixPtr = new MATRIX();
+//malloc(sizeof(MATRIX));
 
 int setCalibrationMatrix(POINT * displayPtr, POINT * screenPtr, MATRIX * matrixPtr) {
 
@@ -171,11 +172,11 @@ void setup() {
     while (Serial.available() == 0) {
       // wait for user input
     }
-    char ans = Serial.read();
+    String ans = Serial.readString();
     delay(1000);
     Serial.print(ans);
     delay(1000);
-    if (ans == 'y') {
+    if (ans.equals("y\n")) {
       populatePointArr(calibPts, i);
       Serial.println("");
       Serial.print(calibPts[i].x);
@@ -241,3 +242,4 @@ void loop() {
   Serial.print("Time");
   Serial.print(count);
 }
+
