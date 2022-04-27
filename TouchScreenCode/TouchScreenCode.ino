@@ -17,9 +17,9 @@ POINT* calibPts = (POINT*)malloc(sizeof(POINT) * 3);
 // set desired screen coordinates corresponding to the 3 calibration points
 // TODO: set these points later
 POINT screenPts[] =     {
-    [0] = { x = 0, y = 0 },
-    [1] = { x = 100, y = 50  },
-    [2] = { x = -50, y = 75  }
+    [0] = { x = 0L, y = 0L },
+    [1] = { x = 100L, y = 50L  },
+    [2] = { x = -50L, y = 75L  }
     };
 MATRIX *matrixPtr = new MATRIX();
 //malloc(sizeof(MATRIX));
@@ -38,7 +38,7 @@ int setCalibrationMatrix(POINT * displayPtr, POINT * screenPtr, MATRIX * matrixP
   } else {
     matrixPtr->An = ((displayPtr[0].x - displayPtr[2].x) * (screenPtr[1].y - screenPtr[2].y)) -
                     ((displayPtr[1].x - displayPtr[2].x) * (screenPtr[0].y - screenPtr[2].y));
-
+    Serial.println("A: " + matrixPtr->An);
     matrixPtr->Bn = ((screenPtr[0].x - screenPtr[2].x) * (displayPtr[1].x - displayPtr[2].x)) -
                     ((displayPtr[0].x - displayPtr[2].x) * (screenPtr[1].x - screenPtr[2].x));
 
@@ -168,21 +168,24 @@ void setup() {
   for (int i = 0; i < 3; i++) {
 //    setStandbyMode();
     sprintf(buffer, "Please press and hold the calibration point #",i + 1);
-    Serial.print(buffer);
+    Serial.println(buffer);
     while (Serial.available() == 0) {
       // wait for user input
     }
     String ans = Serial.readString();
     delay(1000);
+    Serial.print(">");
     Serial.print(ans);
     delay(1000);
-    if (ans.equals("y\n")) {
+    if (ans.equals("y")) {
       populatePointArr(calibPts, i);
       Serial.println("");
       Serial.print(calibPts[i].x);
+      Serial.print(", ");
       Serial.println(calibPts[i].y);
     } else {
-      Serial.print("Are you pressing on the screen? y/n");
+      Serial.println("");
+      Serial.println("Are you pressing on the screen? y/n");
     }  
   }
   setCalibrationMatrix(calibPts, screenPts, matrixPtr);
@@ -225,8 +228,8 @@ void setReadYMode() {
 }
 void loop() {
   setReadXMode();
-	x = analogRead(sensePin);
-	// resolution?
+  x = analogRead(sensePin);
+  // resolution?
 
   setReadYMode();
   y = analogRead(sensePin);
@@ -234,11 +237,18 @@ void loop() {
   count=millis();
   
   // Display the co-ordinate value obtained
+  struct POINT *displayPtPtr = new POINT();
+  struct POINT screenPt = {x, y};
+  getDisplayPoint(displayPtPtr, &screenPt, matrixPtr);
   Serial.print("X:");
   Serial.print(x);
   Serial.print(",");
   Serial.print("Y:");
   Serial.println(y);
+  Serial.print("displayX:");
+  Serial.print(displayPtPtr->x);
+  Serial.print(",displayY:");
+  Serial.println(displayPtPtr->y);
   Serial.print("Time");
   Serial.print(count);
 }
