@@ -4,7 +4,7 @@
 
 The following **required** functionality is completed:
 * [x] [Mechanical task] Design the table
-* [ ] [Mechanical task] Assemble the table
+* [x] [Mechanical task] Assemble the table
 * [x] Set up the touchscreen
 * [ ] Analyze the touchscreen reading and see if we need to apply filters.
 * [ ] Implement a PID controller
