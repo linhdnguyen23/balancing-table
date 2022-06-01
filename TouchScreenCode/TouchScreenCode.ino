@@ -3,14 +3,40 @@
  * (c) 2019 Playful Technology
  */
 #include "calibrate.h"
+#include "PID_v1.h"
+#include<Servo.h>
 
 // CONSTANTS
 // UR, LR, UL, LL corner pins
 const byte cornerPins[] = {2, 3, 4, 5};
 // Central sensor pin
 const byte sensePin = A0;
+const byte servo1Pin = 6;
+const byte servo2Pin = 7;
 
 // GLOBALS
+// PID values
+double Setpoint, Input, Output; //for X
+double Setpoint1, Input1, Output1; //for Y
+Servo servo1; //X axis
+Servo servo2; //Y axis
+
+//PID const
+float Kp = 0.3;                                                     
+float Ki = 0.03;                                                      
+float Kd = 0.13;
+
+float Kp1 = 0.3;                                                       
+float Ki1 = 0.08;                                                      
+float Kd1 = 0.13;
+long cas=0; 
+//INIT PID
+PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+PID myPID1(&Input1, &Output1, &Setpoint1,Kp1,Ki1,Kd1, DIRECT);
+int Ts = 50;
+unsigned long Stable = 0; 
+unsigned int noTouchCount = 0;
+
 // Last sensed values
 int x, y, count;
 POINT* calibPts = (POINT*)malloc(sizeof(POINT) * 3);
@@ -157,6 +183,18 @@ void populatePointArr(POINT* pts, int idx) {
 }
 
 void setup() {
+  servo1.attach(5);
+  servo2.attach(6);
+  Output=95;
+  Output1=95;
+  servo1.write(Output);
+  servo2.write(Output1);
+  
+  //Zapnutie PID
+  myPID.SetMode(AUTOMATIC);
+  myPID.SetOutputLimits(20, 160);
+  myPID1.SetMode(AUTOMATIC);
+  myPID1.SetOutputLimits(20, 160);
   // Configure corner pins as outputs
   for(int i=0; i<4; i++){
     pinMode(cornerPins[i], OUTPUT);
@@ -190,13 +228,20 @@ void setup() {
   }
   setCalibrationMatrix(calibPts, screenPts, matrixPtr);
   Serial.print("matrix: ");
-  Serial.print(matrixPtr->An + ", ");
-  Serial.print(matrixPtr->Bn + ", ");
-  Serial.print(matrixPtr->Cn + ", ");
-  Serial.print(matrixPtr->Dn + ", ");
-  Serial.print(matrixPtr->En + ", ");
-  Serial.print(matrixPtr->Fn + ", ");
-  Serial.print(matrixPtr->Divider);
+  sprintf(buffer, "%ld, ", matrixPtr->An);
+  Serial.print(buffer);
+  sprintf(buffer, "%ld, ", matrixPtr->Bn);
+  Serial.print(buffer);
+  sprintf(buffer, "%ld, ", matrixPtr->Cn);
+  Serial.print(buffer);
+  sprintf(buffer, "%ld, ", matrixPtr->Dn);
+  Serial.print(buffer);
+  sprintf(buffer, "%ld, ", matrixPtr->En);
+  Serial.print(buffer);
+  sprintf(buffer, "%ld, ", matrixPtr->Fn);
+  Serial.print(buffer);
+  sprintf(buffer, "%ld, ", matrixPtr->Divider);
+  Serial.print(buffer);
 }
 
 void setStandbyMode() {
@@ -227,29 +272,48 @@ void setReadYMode() {
   delay(1);
 }
 void loop() {
-  setReadXMode();
-  x = analogRead(sensePin);
-  // resolution?
-
-  setReadYMode();
-  y = analogRead(sensePin);
-  
-  count=millis();
   
   // Display the co-ordinate value obtained
-  struct POINT *displayPtPtr = new POINT();
-  struct POINT screenPt = {x, y};
-  getDisplayPoint(displayPtPtr, &screenPt, matrixPtr);
-  Serial.print("X:");
-  Serial.print(x);
-  Serial.print(",");
-  Serial.print("Y:");
-  Serial.println(y);
-  Serial.print("displayX:");
-  Serial.print(displayPtPtr->x);
-  Serial.print(",displayY:");
-  Serial.println(displayPtPtr->y);
-  Serial.print("Time");
-  Serial.print(count);
+struct POINT *displayPtPtr = new POINT();
+Serial.print("X:");
+Serial.print(x);
+Serial.print(",");
+Serial.print("Y:");
+Serial.println(y);
+Serial.print("displayX:");
+Serial.print(displayPtPtr->x);
+Serial.print(",displayY:");
+Serial.println(displayPtPtr->y);
+Serial.print("Time");
+Serial.print(count);
+  
+	setReadXMode();
+	x = analogRead(sensePin);
+	// resolution?
+
+	setReadYMode();
+	y = analogRead(sensePin);
+
+	servo1.attach(servo1Pin); //connect servos
+	servo2.attach(servo2Pin); 
+	noTouchCount = 0;  
+	screenPt = {x, y};
+	getDisplayPoint(displayPtPtr, &screenPt, matrixPtr);
+	Input = displayPtPtr->x;  // read and convert X coordinate
+	Input1 = displayPtPtr->y; // read and convert Y coordinate
+  
+	if((Input>Setpoint-2 && Input<Setpoint+2 && Input1>Setpoint1-2 && Input1<Setpoint1+2)) {//if ball is close to setpoint
+		Stable=Stable+1; //increment STABLE
+		digitalWrite(9,HIGH); // led would be on to indicate not stablized
+	}
+	else {
+		digitalWrite(9,LOW);
+	}
+	myPID.Compute();  //action control X compute
+	myPID1.Compute(); //   action control  Y compute   
+	servo1.write(Output);//control
+	servo2.write(Output1);//control 
+	Serial.print(Setpoint);   Serial.print(",");  Serial.print(Setpoint1);  Serial.print(",");  Serial.print(Input);Serial.print(","); Serial.println(Input1); 
+
 }
 
