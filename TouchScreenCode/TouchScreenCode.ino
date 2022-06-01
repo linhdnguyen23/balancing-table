@@ -1,9 +1,10 @@
+#include <PID_v1.h>
+
 /**
  * Resistive Touchscreen Example
  * (c) 2019 Playful Technology
  */
 #include "calibrate.h"
-#include "PID_v1.h"
 #include<Servo.h>
 
 // CONSTANTS
@@ -297,7 +298,7 @@ Serial.print(count);
 	servo1.attach(servo1Pin); //connect servos
 	servo2.attach(servo2Pin); 
 	noTouchCount = 0;  
-	screenPt = {x, y};
+	POINT screenPt = {x, y};
 	getDisplayPoint(displayPtPtr, &screenPt, matrixPtr);
 	Input = displayPtPtr->x;  // read and convert X coordinate
 	Input1 = displayPtPtr->y; // read and convert Y coordinate
