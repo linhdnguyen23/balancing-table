@@ -22,33 +22,33 @@ Servo servo1; //X axis
 Servo servo2; //Y axis
 
 //PID const
-float Kp = 0.3;                                                     
-float Ki = 0.03;                                                      
+float Kp = 0.3;
+float Ki = 0.03;
 float Kd = 0.13;
 
-float Kp1 = 0.3;                                                       
-float Ki1 = 0.08;                                                      
+float Kp1 = 0.3;
+float Ki1 = 0.08;
 float Kd1 = 0.13;
-long cas=0; 
+long cas=0;
 //INIT PID
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 PID myPID1(&Input1, &Output1, &Setpoint1,Kp1,Ki1,Kd1, DIRECT);
 int Ts = 50;
-unsigned long Stable = 0; 
+unsigned long Stable = 0;
 unsigned int noTouchCount = 0;
 
 // Last sensed values
 int x, y, count;
-POINT calibPts = {
+POINT calibPts[] = {
   [0] = { x = -1L, y = -1L },
   [1] = { x = -1L, y = -1L  },
   [2] = { x = -1L, y = -1L  }
 };
-POINT* calibPtr[3];
-POINT* screenPtr[3];
+POINT* calibPtr;
+POINT* screenPtr;
 
 //for (int i = 0; i < sizeof(calibPts); i++) {
-//  calibPtr[i] = &calibPts[i]; 
+//  calibPtr[i] = &calibPts[i];
 //}
 
 // set desired screen coordinates corresponding to the 3 calibration points
@@ -58,8 +58,6 @@ POINT screenPts[] =     {
     [1] = { x = 100L, y = 50L  },
     [2] = { x = -50L, y = 75L  }
 };
-calibPtr = &calibPts;
-screenPtr = &screenPts;
 
 MATRIX *matrixPtr = new MATRIX();
 //malloc(sizeof(MATRIX));
@@ -197,13 +195,22 @@ void populatePointArr(POINT* pts, int idx) {
 }
 
 void setup() {
+  calibPtr = calibPts;
+  screenPtr = screenPts;
+
+//for (int i = 0; i < sizeof(calibPts); i++) {
+//  calibPtr[i] = calibPts[i];
+//}
+//for (int i = 0; i < sizeof(screenPts); i++) {
+//  screenPtr[i] = screenPts[i];
+//}
   servo1.attach(6);
   servo2.attach(7);
   Output=0;
   Output1=0;
 //  servo1.write(Output);
 //  servo2.write(Output1);
-  
+
   //Zapnutie PID
   myPID.SetMode(AUTOMATIC);
   myPID.SetOutputLimits(0, 90);
@@ -238,7 +245,7 @@ void setup() {
     } else {
       Serial.println("");
       Serial.println("Are you pressing on the screen? y/n");
-    }  
+    }
   }
   setCalibrationMatrix(calibPtr, screenPtr, matrixPtr);
   Serial.print("matrix: ");
@@ -273,7 +280,7 @@ void setReadXMode() {
   digitalWrite(cornerPins[2], LOW);
   digitalWrite(cornerPins[3], LOW);
   // Read the sensor value in the x gradient
-  delay(1);
+  delay(10);
 }
 
 void setReadYMode() {
@@ -283,17 +290,17 @@ void setReadYMode() {
   digitalWrite(cornerPins[2], HIGH);
   digitalWrite(cornerPins[3], LOW);
   // Read the sensor value in the y gradient
-  delay(1);
+  delay(10);
 }
 void loop() {
 
-    servo2.write(0);
-    delay(1000);
-      servo2.write(64);
-    delay(1000);
-      servo2.write(128);
-    delay(1000);
-      
+//    servo2.write(0);
+//    delay(1000);
+//      servo2.write(64);
+//    delay(1000);
+//      servo2.write(128);
+//    delay(1000);
+
 //    Serial.print("servo values: ");
 //    Serial.println(servo1.read());
 //    delay(100);
@@ -302,39 +309,43 @@ void loop() {
 //      Serial.print("servo values: ");
 //    Serial.println(servo1.read());
 ////    Serial.println(servo2.read());
-  
-//  
-//  // Display the co-ordinate value obtained
-////struct POINT *displayPtPtr = new POINT();
-////Serial.print("X:");
-//Serial.print(x);
-////Serial.print(",");
-////Serial.print("Y:");
-//Serial.println(y);
-////Serial.print("displayX:");
-////Serial.print(displayPtPtr->x);
-////Serial.print(",displayY:");
-////Serial.println(displayPtPtr->y);
-////Serial.print("Time");
-////Serial.print(count);
-//  
-//	setReadXMode();
-//	x = analogRead(sensePin);
-//	// resolution?
-//
-//	setReadYMode();
-//	y = analogRead(sensePin);
-//
+
+
+  setReadXMode();
+  x = analogRead(sensePin);
+  setReadYMode();
+  y = analogRead(sensePin);
+	// resolution?
+
+        Serial.print("x: ");
+                Serial.print(x);
+
+        Serial.print(", y: ");
+                Serial.print(y);
+                        Serial.print("\n");
+
+  // Display the co-ordinate value obtained
+  struct POINT *displayPtPtr = new POINT();
+	getDisplayPoint(displayPtPtr, screenPtr, matrixPtr);
+
+ Serial.print("displayX:");
+ Serial.print(displayPtPtr->x);
+ Serial.print(",displayY:");
+ Serial.println(displayPtPtr->y);
+ Serial.print("Time");
+ Serial.print(count);
+
+
+
 //	servo1.attach(servo1Pin); //connect servos
-//	servo2.attach(servo2Pin); 
-//	noTouchCount = 0;  
-//	POINT screenPt = {x, y};
-////	getDisplayPoint(displayPtPtr, &screenPt, matrixPtr);
+//	servo2.attach(servo2Pin);
+//	noTouchCount = 0;
+
 ////	Input = displayPtPtr->x;  // read and convert X coordinate
 ////	Input1 = displayPtPtr->y; // read and convert Y coordinate
 //        Input = x;  // read and convert X coordinate
 //	Input1 = y; // read and convert Y coordinate
-//  
+//
 //	if((Input>Setpoint-2 && Input<Setpoint+2 && Input1>Setpoint1-2 && Input1<Setpoint1+2)) {//if ball is close to setpoint
 //		Stable=Stable+1; //increment STABLE
 //		digitalWrite(9,HIGH); // led would be on to indicate not stablized
@@ -343,10 +354,10 @@ void loop() {
 //		digitalWrite(9,LOW);
 //	}
 //	myPID.Compute();  //action control X compute
-//	myPID1.Compute(); //   action control  Y compute   
+//	myPID1.Compute(); //   action control  Y compute
 //	servo1.write(Output);//control
-//	servo2.write(Output1);//control 
-//	Serial.print("servo1: ");Serial.print(Output);   Serial.print(",servo2:");  Serial.print(Output1);  Serial.print(",");  Serial.print(Input);Serial.print(","); Serial.println(Input1); 
+//	servo2.write(Output1);//control
+//	Serial.print("servo1: ");Serial.print(Output);   Serial.print(",servo2:");  Serial.print(Output1);  Serial.print(",");  Serial.print(Input);Serial.print(","); Serial.println(Input1);
 
 }
 
