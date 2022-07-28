@@ -38,7 +38,7 @@ unsigned long Stable = 0;
 unsigned int noTouchCount = 0;
 
 // Last sensed values
-int x, y, count;
+int x, y;
 POINT calibPts[] = {
   [0] = { x = -1L, y = -1L },
   [1] = { x = -1L, y = -1L  },
@@ -46,17 +46,14 @@ POINT calibPts[] = {
 };
 POINT* calibPtr;
 POINT* screenPtr;
-
-//for (int i = 0; i < sizeof(calibPts); i++) {
-//  calibPtr[i] = &calibPts[i];
-//}
+struct POINT *displayPtPtr = new POINT();
 
 // set desired screen coordinates corresponding to the 3 calibration points
 // TODO: set these points later
 POINT screenPts[] =     {
-    [0] = { x = 0L, y = 0L },
-    [1] = { x = 100L, y = 50L  },
-    [2] = { x = -50L, y = 75L  }
+    [0] = { x = -50L, y = -30L },
+    [1] = { x = -50L, y = 30L  },
+    [2] = { x = 50L, y = 30L  }
 };
 
 MATRIX *matrixPtr = new MATRIX();
@@ -65,8 +62,6 @@ MATRIX *matrixPtr = new MATRIX();
 int setCalibrationMatrix(POINT * displayPtr, POINT * screenPtr, MATRIX * matrixPtr) {
 
   int  retValue = OK ;
-
-
 
   matrixPtr->Divider = ((screenPtr[0].x - screenPtr[2].x) * (screenPtr[1].y - screenPtr[2].y)) -
                        ((screenPtr[1].x - screenPtr[2].x) * (screenPtr[0].y - screenPtr[2].y));
@@ -317,25 +312,22 @@ void loop() {
   y = analogRead(sensePin);
 	// resolution?
 
-        Serial.print("x: ");
-                Serial.print(x);
-
-        Serial.print(", y: ");
-                Serial.print(y);
-                        Serial.print("\n");
+  Serial.print("x: ");
+  Serial.print(x);
+  
+  Serial.print(", y: ");
+  Serial.print(y);
+  Serial.print("\n");
 
   // Display the co-ordinate value obtained
-  struct POINT *displayPtPtr = new POINT();
+  screenPtr->x = x;
+  screenPtr->y = y;
 	getDisplayPoint(displayPtPtr, screenPtr, matrixPtr);
 
  Serial.print("displayX:");
  Serial.print(displayPtPtr->x);
  Serial.print(",displayY:");
  Serial.println(displayPtPtr->y);
- Serial.print("Time");
- Serial.print(count);
-
-
 
 //	servo1.attach(servo1Pin); //connect servos
 //	servo2.attach(servo2Pin);
@@ -360,4 +352,3 @@ void loop() {
 //	Serial.print("servo1: ");Serial.print(Output);   Serial.print(",servo2:");  Serial.print(Output1);  Serial.print(",");  Serial.print(Input);Serial.print(","); Serial.println(Input1);
 
 }
-
