@@ -15,15 +15,19 @@ float kp = 0.5;
 float ki = 0;// I think this value should be in between 0.1 and 0.3 
 float kd = 1;
 
-unsigned long previousTime =0; 
-float errorX=0; 
-float errorY=0;
-float lastError=0; 
+unsigned long previousTimeX = 0;
+unsigned long previousTimeY = 0;
+float errorX = 0; 
+float errorY = 0;
+float lastErrorX =0;
+float lastErrorY =0;
+float totalErrorX =0;
+float totalErrorY =0; 
 int SetPoint =0; 
-int setpointX = 555;
-int setpointY = 555;
-int screen_upper=750;
-int screen_lower=250;
+int setpointX = 500;
+int setpointY = 500;
+int screenUpper = 750;
+int screenLower = 250;
         
 int readDelay = 1;
 
@@ -42,75 +46,75 @@ void setup() {
 }
 
 void loop() {
-	float PID_total=0;
-  float PID_totaly=0;
-  float x_upper=305;
-  float x_lower= -195;
-  float y_upper= 305;
-  float y_lower= -195; 
+  float pidTotalX=0;
+  float pidTotalY=0;
+  float xUpper=305;
+  float xLower= -195;
+  float yUpper= 305;
+  float yLower= -195; 
 
   // Set-up touch screen and get X coordinate
   digitalWrite(cornerPins[0], HIGH);
-        digitalWrite(cornerPins[1], HIGH);
-        digitalWrite(cornerPins[2], LOW);
-        digitalWrite(cornerPins[3], LOW); 
-        delay(readDelay);
+  digitalWrite(cornerPins[1], HIGH);
+  digitalWrite(cornerPins[2], LOW);
+  digitalWrite(cornerPins[3], LOW); 
+  delay(readDelay);
 
-        x = analogRead(sensePin);
+  x = analogRead(sensePin);
 
-        // Set-up touch screen and get Y coordinate
-        digitalWrite(cornerPins[0], HIGH);
-        digitalWrite(cornerPins[1], LOW);
-        digitalWrite(cornerPins[2], HIGH);  
-        digitalWrite(cornerPins[3], LOW);
-        delay(readDelay);
+  // Set-up touch screen and get Y coordinate
+  digitalWrite(cornerPins[0], HIGH);
+  digitalWrite(cornerPins[1], LOW);
+  digitalWrite(cornerPins[2], HIGH);  
+  digitalWrite(cornerPins[3], LOW);
+  delay(readDelay);
 
-        y = analogRead(sensePin);
+  y = analogRead(sensePin);
 
 
-        // Display the co-ordinate value obtained
-        Serial.print(" x: ");
-        Serial.print(x);
-        Serial.print("  y: ");
-        Serial.println(y);
+  // Display the co-ordinate value obtained
+  Serial.print(" x: ");
+  Serial.print(x);
+  Serial.print("  y: ");
+  Serial.println(y);
 
-        SetPoint = setpointX;
-        // Calculate the error in X direction
-        errorX = PIDerror(x);
+  SetPoint = setpointX; // 
+  // Calculate the error in X direction
+  errorX = PIDerror(x, lastErrorX, totalErrorX, previousTimeX);
 
-        Serial.print(" PID: ");
-        Serial.print(errorX);
+  Serial.print(" PID: ");
+  Serial.print(errorX);
+  // ?: how do we determine the range of errorX with these equations
+  xLower = setpointX - screenUpper; // TODO: 500 - 750
+  xUpper = setpointX - screenLower; // TODO: 500 - 250
 
-        x_lower= setpointX - screen_upper;
-        x_upper= setpointX- screen_lower;
+  // SET POINT RANGE VARIABILITY X
+  pidTotalX = map(errorX, xUpper, xLower, 5, 130); // 150 to 150 plus minus error 
+  // 0 to 150 is motor range 
+  myservo.write(pidTotalX);
+  //delay(10);   // this was in example code so maybe it's not needed or we can do it differently
+  // need to add code for the output from the PID being fed to the motors
+  yLower= setpointY - screenUpper; // TODO: 500 - 750
+  yUpper= setpointY- screenLower; // TODO: 500 - 250	
 
-        // SET POINT RANGE VARIABILITY X
-		PID_total = map(errorX, x_upper, x_lower, 5, 130); // 150 to 150 plus minus error 
-		// 0 to 150 is motor range 
-		myservo.write(PID_total);
-        //delay(10);   // this was in example code so maybe it's not needed or we can do it differently
-        // need to add code for the output from the PID being fed to the motors
-        y_lower= setpointY - screen_upper;
-        y_upper= setpointY- screen_lower;		
-		
 
-        SetPoint = setpointY;
-        // Calculate the error in Y direction
-        //errorY = PIDerror(y);
-        //PID_totaly= map(errorY, y_upper, y_lower, 5, 130);
-        //myservoy.write(PID_totaly); // 250 to -250 may or may not be the range for the set point 
-        //delay(10);   // this was in example code so maybe it's not needed or we can do it differently
-        // need to add code for the output from the PID being fed to the motors 
+  SetPoint = setpointY;
+  // Calculate the error in Y direction
+  errorY = PIDerror(y, lastErrorY, totalErrorY, previousTimeY);
+  pidTotalY= map(errorY, yUpper, yLower, 5, 130);
+  myservoy.write(pidTotalY); // 250 to -250 may or may not be the range for the set point 
+  //delay(10);   // this was in example code so maybe it's not needed or we can do it differently
+  // need to add code for the output from the PID being fed to the motors 
 }
 
 
-float PIDerror(float inp){
+float PIDerror(float inp, float& lastError, float& totalError, unsigned long& previousTime){
+  // TODO: logic error cumError is a local variable, it should be global to be able to cumulate the values. We would need to have cumErrorX and cumErrorY
   
   // Local function variables 
   unsigned long currentTime = millis();
   int elapsedTime;
   float currentError;
-  float cumError;
   float rateError;
   float out; 
   int upperLim=800;
@@ -119,16 +123,16 @@ float PIDerror(float inp){
   elapsedTime = (currentTime - previousTime); 
 
   currentError = SetPoint - inp;   // current error
-  cumError += currentError ;   //integral - sum all errors 
-  rateError = (currentError - lastError)/elapsedTime;   //derivative
+  totalError += currentError ;   // integral - sum all errors 
+  rateError = (currentError - lastError) / elapsedTime;   // derivative
 
-        Serial.print(" current error: ");
-        Serial.print(currentError);
-        Serial.print("  rateError: ");
-         Serial.println(rateError);
+  Serial.print(" current error: ");
+  Serial.print(currentError);
+  Serial.print("  rateError: ");
+  Serial.println(rateError);
   
   
-  out = kp*currentError + ki*cumError + kd*rateError;   // PID Output
+  out = kp * currentError + ki * totalError + kd * rateError;   // PID Output
   
   
   //if(out < lowerLim){out = lowerLim;}
