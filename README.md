@@ -16,9 +16,18 @@ The following **optional** features are implemented:
 
 
 ## CAD Design
+![Overview](https://github.com/linhdnguyen23/balancing-table/blob/main/CAD_Design/Overview.PNG)
+![Side1](https://github.com/linhdnguyen23/balancing-table/blob/main/CAD_Design/Side1.PNG)
+![Side2](https://github.com/linhdnguyen23/balancing-table/blob/main/CAD_Design/Side2.PNG)
 
-## Notes
-
+## Prototype
+![](https://github.com/linhdnguyen23/balancing-table/blob/main/Photos/img001.jpg)
+![](https://github.com/linhdnguyen23/balancing-table/blob/main/Photos/img002.jpg)
+![](https://github.com/linhdnguyen23/balancing-table/blob/main/Photos/img003.jpg)
+![](https://github.com/linhdnguyen23/balancing-table/blob/main/Photos/img004.jpg)
+![](https://github.com/linhdnguyen23/balancing-table/blob/main/Photos/img005.jpg)
+![](https://github.com/linhdnguyen23/balancing-table/blob/main/Photos/img006.jpg)
+![](https://github.com/linhdnguyen23/balancing-table/blob/main/Photos/img007.jpg)
 
 ## License
 
