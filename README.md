@@ -6,8 +6,8 @@ The following **required** functionality is completed:
 * [x] [Mechanical task] Design the table
 * [x] [Mechanical task] Assemble the table
 * [x] Set up the touchscreen
-* [ ] Analyze the touchscreen reading and see if we need to apply filters.
-* [ ] Implement a PID controller
+* [X] Analyze the touchscreen reading and see if we need to apply filters.
+* [X] Implement a PID controller
 The following **optional** features are implemented:
 
 * [ ] GUI access/configuration
